@@ -1,0 +1,27 @@
+stages:
+  setup_docker:
+    cmd: docker-compose -f dvc-compose.yml up -d
+    deps:
+      - dvc-compose.yml
+
+  create_buckets:
+    cmd: |
+      aws --endpoint-url=http://localhost:4566 s3 mb s3://raw &&
+      aws --endpoint-url=http://localhost:4566 s3 mb s3://staging &&
+      aws --endpoint-url=http://localhost:4566 s3 mb s3://curated
+    deps:
+      - dvc-compose.yml
+    outs:
+      - s3://raw
+      - s3://staging
+      - s3://curated
+
+  unpack_to_raw:
+    cmd: python unpack_to_raw.py
+    deps:
+      - unpack_to_raw.py
+      - data/
+    outs:
+      - s3://raw/combined_file.txt
+    params:
+      - unpack_to_raw
